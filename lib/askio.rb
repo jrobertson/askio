@@ -8,6 +8,7 @@ require 'rest-client'
 
 
 class AskIO
+  using ColouredText
 
   attr_reader :invocation, :utterances
 
@@ -36,7 +37,7 @@ class AskIO
     
   end
   
-  def ask(request)
+  def ask(request, &blk)
     
             
     r = @utterances[request]
@@ -47,7 +48,7 @@ class AskIO
 
       puts '  debugger: your intent is to ' + r if @debug
 
-      respond(r)      
+      respond(r, &blk)      
 
     end        
             
@@ -121,11 +122,35 @@ class AskIO
       }      
     end
     
-    r = post @endpoint, h
+    puts ('before post | h: ' + h.inspect).debug if @debug
+    
+    r = if block_given? then
+    
+      puts 'inside block'.info if @debug
+      
+      symbolize = -> (h) do
+
+        h.inject({}) do |r,x|
+
+          key, val = x    
+          r.merge({key.to_sym => val.is_a?(Hash) ? symbolize[val] : val})
+
+        end
+
+      end
+
+      yield(symbolize[h]) 
+      
+    else
+      
+      post @endpoint, h
+      
+    end
+    
     puts '  degbugger: r: ' + r.inspect if @debug
 
-    r[:response][:outputSpeech][:text]
+    speech = r[:response][:outputSpeech]
+    speech[:text] || speech[:ssml]
   end
 
 end
-
