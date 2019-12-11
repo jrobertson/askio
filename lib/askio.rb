@@ -13,10 +13,11 @@ class AskIO
   attr_reader :invocation, :utterances
 
   def initialize(manifest, model, debug: false, userid: nil, 
-                 deviceid: nil, appid: nil)
+                 deviceid: nil, appid: nil, modelid: nil)
 
     @debug, @userid, @deviceid, @appid = debug, userid, deviceid, appid
-
+    @modelid = modelid
+    
     @locale = manifest['manifest']['publishingInformation']['locales']\
         .keys.first
     puts '@locale: ' + @locale.inspect if @debug
@@ -98,7 +99,7 @@ class AskIO
     h['context']['System']['device']['deviceId'] = @deviceid if @deviceid
     
     if @appid then
-      h['session']['appliaction']['applicationId'] = @appid
+      h['session']['application']['applicationId'] = @appid
       h['context']['System']['application']['applicationId'] = @appid
     end
     
@@ -139,7 +140,7 @@ class AskIO
 
       end
 
-      yield(symbolize[h]) 
+      yield(@modelid, symbolize[h]) 
       
     else
       
@@ -151,6 +152,7 @@ class AskIO
 
     speech = r[:response][:outputSpeech]
     speech[:text] || speech[:ssml]
+
   end
 
 end
